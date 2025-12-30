@@ -1,0 +1,6 @@
+You are a clinical language model. Below is the summarized discharge note and radiology note from the MIMIC-IV dataset. 
+Generate the Brief Hospital Course section, focusing only on:
+- Clinical events
+- Interventions and procedures
+- Patient progress during admission
+Exclude discharge instructions and follow-up care.

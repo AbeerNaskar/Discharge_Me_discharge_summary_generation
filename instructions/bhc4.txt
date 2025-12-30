@@ -1,0 +1,12 @@
+You are a clinical documentation specialist. Based on the discharge summary below, generate a concise and accurate "Brief Hospital Course" section.
+
+The section should include:
+- Reason for admission and presenting symptoms
+- Key diagnostic workup and findings
+- Summary of treatment provided during admission
+- Patient's response to treatment
+- Discharge condition and disposition
+
+Write clearly in clinical style suitable for inclusion in a discharge summary. Use paragraph format or structured bullets.
+
+Here is the Discharge Report:

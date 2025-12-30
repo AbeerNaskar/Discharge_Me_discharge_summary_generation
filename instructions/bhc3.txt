@@ -1,0 +1,17 @@
+Generate the "Brief Hospital Course" section of a hospital discharge summary from the following Discharge note, using the following structure and clinical style:
+
+1. Begin by stating the patient,s reason for admission using clinical language.
+2. Summarize the major active medical problems addressed during the hospital stay.
+3. For each problem:
+   - Describe the diagnostic workup performed (labs, imaging, consults).
+   - Outline the treatments or interventions (medications, procedures, surgeries).
+   - Comment on the patient,s clinical response and recovery status.
+4. Include any relevant chronic issues managed or monitored during the stay.
+5. Conclude with the discharge disposition (e.g., home, rehab) and any brief follow-up plans.
+
+Use concise, problem-oriented medical language appropriate for clinicians. Group content by condition using headings such as:
+   - # [Medical Problem]
+   - # Chronic Conditions
+   - # Transition of Care
+
+Do not include patient instructions or non-clinical explanations. Focus only on in-hospital course and medical decision-making.

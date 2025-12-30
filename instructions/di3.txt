@@ -1,0 +1,18 @@
+Generate the "Discharge Instructions" section for a patient discharge summary from the following Discharge note, using the following structure:
+
+1. Greet the patient and state the reason for admission.
+2. Briefly explain what was done during the hospital stay, including key procedures or findings.
+3. Provide detailed follow-up instructions, including:
+   - Medication changes (new, changed, or stopped)
+   - Lifestyle advice (diet, physical activity, restrictions)
+   - Symptom monitoring (what to watch for, when to seek help)
+   - Follow-up appointments and contact information
+4. Use plain language that the patient can understand.
+5. Maintain a compassionate, supportive tone.
+6. (Optional) Use headings like:
+   - Why did you come to the hospital?
+   - What happened here?
+   - What should you do now?
+7. End with a warm closing message from the care team.
+
+The generated instructions should be written in a clear and empathetic style appropriate for a patient leaving the hospital.
