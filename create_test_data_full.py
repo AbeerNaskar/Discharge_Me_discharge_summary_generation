@@ -8,8 +8,9 @@ from transformers import BertTokenizer
 
 key = "test_phase_2"   ## "test_phase_2"  "valid"   "train"
 
-
 import pandas as pd
+
+
 # Read the necessary CSV files
 df_diagnosis = pd.read_csv('./'+key+'/'+'diagnosis.csv.gz', compression='gzip')
 df_triage = pd.read_csv('./'+key+'/'+'triage.csv.gz', compression='gzip')
@@ -19,8 +20,7 @@ df_edstays = pd.read_csv('./'+key+'/'+'edstays.csv.gz', compression='gzip')
 df_diagnosis_subset = df_diagnosis[['stay_id', 'icd_title']]
 df_triage_subset = df_triage[['stay_id', 'temperature', 'heartrate', 'resprate', 'o2sat', 'sbp', 'dbp', 'pain', 'acuity', 'chiefcomplaint']]
 
-# Merge the dataframes based on the common column 'stay_id'
-# Start with df_edstays as the base dataframe to keep all its rows
+
 df_merged = pd.merge(df_edstays, df_diagnosis_subset, on='stay_id', how='left')
 df_merged = pd.merge(df_merged, df_triage_subset, on='stay_id', how='left')
 
@@ -37,11 +37,6 @@ for col in columns_to_split:
     df_merged[col] = df_merged[col].astype(str).apply(lambda x: x.split(',')[0].strip())
 
 
-print("Merged data saved to merged_ed_data.csv")
-
-
-# prompt: read, radiology.csv.gz, here under the 'text' column there are multiple entries, corresponding to 'hadm_id' column, merge those and output in new csv file
-
 import pandas as pd
 df_rad = pd.read_csv('./'+key+'/'+'radiology.csv.gz', compression='gzip')
 
@@ -51,7 +46,6 @@ df_merged1 = df_merged1.rename(columns={'text': 'radiology_text'})
 # Save the merged dataframe to a new CSV file
 df_merged = pd.merge(df_merged, df_merged1, on='hadm_id', how='left')
 #df_merged.to_csv('merged_radiology.csv', index=False)
-
 
 import pandas as pd
 df_target = pd.read_csv('./'+key+'/'+'discharge_target.csv.gz', compression='gzip', header=0, sep=',', quotechar='"')
@@ -71,8 +65,6 @@ def remove_substrings(text, instructions, course):
         text = text.replace(instructions, '', 1) # Remove only the first occurrence
     if isinstance(course, str):
         text = text.replace(course, '', 1) # Remove only the first occurrence
-    # Remove the specified phrases
-    #text = text.replace('Brief Hospital Course:', '').replace('Discharge Instructions:', '')
     return text.strip()
 
 # Apply the function to create the cleaned text column
@@ -86,115 +78,21 @@ merged_df = merged_df.drop(columns=['text'])
 merged_df = merged_df.rename(columns={'cleaned_text': 'discharge_text'})
 
 
-
 df_final_merged = pd.merge(df_merged, merged_df, on='hadm_id', how='left')
 
 
-
-
-df = df_final_merged
-
-# Predefined section headers
-section_headers = [
-    "Allergies:", "Attending:", "Chief Complaint:", "Major Surgical or Invasive Procedure:",
-    "History of Present Illness:", "Past Medical History:", "Social History:", "Family History:",
-    "Physical Exam:", "Pertinent Results:", "Brief Hospital Course:", "Medications on Admission:",
-    "Discharge Medications:", "Discharge Disposition:", "Discharge Diagnosis:",
-    "Discharge Condition:", "Discharge Instructions:", "Followup Instructions:"
-]
-
-# Escape special characters and make regex pattern
-header_pattern = '|'.join(map(re.escape, section_headers))
-
-# Function to split text into sections
-def split_into_sections(text):
-    section_dict = {}
-    text = str(text).replace("___", "").strip()
-
-    # Use regex to find all header locations
-    matches = list(re.finditer(header_pattern, text))
-    
-    # Handle text before first section
-    if matches:
-        start_text = text[:matches[0].start()].strip()
-        if start_text:
-            section_dict['start'] = start_text
-
-        for i, match in enumerate(matches):
-            header = match.group()
-            start_idx = match.end()
-            end_idx = matches[i+1].start() if i+1 < len(matches) else len(text)
-            section_body = text[start_idx:end_idx].strip().replace("___", "")
-            section_dict[header.rstrip(':')] = section_body
-    else:
-        section_dict['start'] = text  # if no headers found
-
-    return section_dict
-
-
-# Apply section extraction
-df['section_dict'] = df['discharge_text'].apply(split_into_sections)
-
-# Formatting function
-def format_dict_output(data: dict) -> str:
-    output_lines = []
-    for key, value in data.items():
-        cleaned_value = str(value).strip() #.replace('\n', '')
-        output_lines.append(f"{key}: {cleaned_value}\n")
-    return '\n'.join(output_lines)
-
-# Function to build BHC_discharge
-def build_bhc_discharge(sec_dict):
-    keys_to_keep = [
-        "Allergies", "Chief Complaint", "Major Surgical or Invasive Procedure", 
-        "History of Present Illness", "Past Medical History", "Social History", 
-        "Family History", "Physical Exam", "Pertinent Results"
-    ]
-    filtered = {}
-    if 'start' in sec_dict:
-        start_lines = sec_dict['start'].splitlines()
-        for line in start_lines:
-            if "Service:" in line:
-                filtered['start'] = line.strip()
-                break
-    for key in keys_to_keep:
-        if key in sec_dict:
-            filtered[key] = sec_dict[key]
-    return format_dict_output(filtered)
-
-# Function to build DI_discharge
-def build_di_discharge(sec_dict):
-    keys_to_keep = [
-        "Chief Complaint", "History of Present Illness", "Physical Exam",
-        "Medications on Admission", "Discharge Medications", "Discharge Disposition",
-        "Discharge Diagnosis", "Discharge Condition"
-    ]
-    filtered = {}
-    if 'start' in sec_dict:
-        start_lines = sec_dict['start'].splitlines()
-        for line in start_lines:
-            if "Service:" in line:
-                filtered['start'] = line.strip()
-                break
-    for key in keys_to_keep:
-        if key in sec_dict:
-            filtered[key] = sec_dict[key]
-    return format_dict_output(filtered)
-
-# Apply both functions to new columns
-df['BHC_discharge'] = df['section_dict'].apply(build_bhc_discharge)
-df['DI_discharge'] = df['section_dict'].apply(build_di_discharge)
-
-# Save to file (optional)
-#df_final_merged=df
-
-
-
-
 # Output the final merged dataframe to a new CSV file
-#df_final_merged.to_csv(key+'_truncated.csv', index=False)
+#df_final_merged.to_csv(key+'_full.csv', index=False)
 
-#print("All data merged and saved to : "+key+"_truncated.csv")
+#print("All data merged and saved to "+key+"_full.csv")
+
+
+
+
+
+
+
+
 
 
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
@@ -209,11 +107,8 @@ def truncate_by_bert_tokens(text: str, max_tokens: int) -> str:
     truncated_text = tokenizer.convert_tokens_to_string(truncated_tokens)
     return truncated_text
 
-
-
 # Load your filtered data
-filtered_df = df #pd.read_csv(key+'_truncated.csv')
-
+filtered_df =  df_final_merged   #pd.read_csv(key+'_full.csv')
 
 # Instructions
 inst_bhc = """
@@ -245,10 +140,8 @@ Below is an instruction that describes a task, paired with an input that provide
 {outputs}
 """
 
-
-
-# Function to format the input text
-def format_input_bhc(row):
+# Function to format input string from structured data
+def format_input(row):
     return (
         f"gender: {row['gender']}\n"
         f"arrival_transport: {row['arrival_transport']}\n"
@@ -263,36 +156,17 @@ def format_input_bhc(row):
         f"pain: {row['pain']}\n"
         f"acuity: {row['acuity']}\n"
         f"chiefcomplaint: {row['chiefcomplaint']}\n\n"
-        f"## Discharge text\n: {truncate_by_bert_tokens(row.get('BHC_discharge', ''), 4000)}\n"
-    )
-
-
-# Function to format the input text
-def format_input_di(row):
-    return (
-        f"gender: {row['gender']}\n"
-        f"arrival_transport: {row['arrival_transport']}\n"
-        f"disposition: {row['disposition']}\n"
-        f"icd_title: {row['icd_title']}\n"
-        f"temperature: {row['temperature']}\n"
-        f"heartrate: {row['heartrate']}\n"
-        f"resprate: {row['resprate']}\n"
-        f"o2sat: {row['o2sat']}\n"
-        f"sbp: {row['sbp']}\n"
-        f"dbp: {row['dbp']}\n"
-        f"pain: {row['pain']}\n"
-        f"acuity: {row['acuity']}\n"
-        f"chiefcomplaint: {row['chiefcomplaint']}\n\n"
-        f"## Discharge text\n: {truncate_by_bert_tokens(row.get('DI_discharge', ''), 4000)}\n"
+        f"## Radiology text\n: {truncate_by_bert_tokens(row.get('radiology_text', ''), 2500)}\n\n"
+        f"## Discharge text\n: {truncate_by_bert_tokens(row.get('discharge_text', ''), 4000)}\n"
     )
 
 # Generate BHC prompt examples
 df_bhc = filtered_df.copy()
 df_bhc["text"] = df_bhc.apply(
     lambda row: alpaca_prompt.format(
-        instruction=inst_bhc.strip(),   #########################  inst_bhc for structured ##### inst_bhc1 for unstructured
-        inputs=format_input_bhc(row),
-        outputs=truncate_by_bert_tokens(row['brief_hospital_course'], 1000)   ####################################### row['brief_hospital_course'] for unstructure , output will be '' for inference
+        instruction=inst_bhc.strip(),
+        inputs=format_input(row),
+        outputs=truncate_by_bert_tokens(row['brief_hospital_course'], 1000)  ###### , output will be '' for inference
     ),
     axis=1
 )
@@ -301,26 +175,21 @@ df_bhc["text"] = df_bhc.apply(
 df_ds = filtered_df.copy()
 df_ds["text"] = df_ds.apply(
     lambda row: alpaca_prompt.format(
-        instruction=inst_ds.strip(),  #########################  inst_ds for structured ##### inst_ds1 for unstructured
-        inputs=format_input_di(row),
-        outputs=truncate_by_bert_tokens(row['discharge_instructions'], 1000)     ############################################### row['discharge_instructions'] for unstructure  , output will be '' for inference
+        instruction=inst_ds.strip(),
+        inputs=format_input(row),
+        outputs=truncate_by_bert_tokens(row['discharge_instructions'], 1000)  ##### , output will be '' for inference
     ),
     axis=1
 )
-
-
 
 # Combine the two DataFrames
 df_combined = pd.concat([df_bhc, df_ds], ignore_index=True)
 
 # Save to file if needed
-#df_combined.to_csv(key+'_truncated.csv', index=False)
+#df_combined.to_csv(key+'_full.csv', index=False)
 
 
-
-
-
-df = df_combined  #pd.read_csv(key+'_truncated.csv')
+df = df_combined #pd.read_csv(key + '_full.csv')
 
 
 #df['bert_token_count_text'] = df['text'].apply(count_bert_tokens)
@@ -333,10 +202,8 @@ df = df_combined  #pd.read_csv(key+'_truncated.csv')
 
 df = df[['hadm_id', 'text', 'discharge_instructions', 'brief_hospital_course']]
 # Save the filtered DataFrame
-df.to_csv(key+'_truncated.csv', index=False)
+df.to_csv(key+'_full.csv', index=False)
 
 
 print("Created and saved combined prompts with both BHC and Discharge Instructions.")
-
-
 
