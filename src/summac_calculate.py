@@ -16,8 +16,8 @@ df_xlsx = pd.read_excel(xlsx_file)
 df_csv = df_csv[['hadm_id', 'discharge_text']]
 
 # Split df_csv into BHC and DI
-df_bhc = df_csv.iloc[:250].copy()
-df_di = df_csv.iloc[-250:].copy()
+df_bhc = df_csv.iloc[:250].copy()  # hard coded: as there are 250 samples, you can also use len(df_csv) instead of 250
+df_di = df_csv.iloc[-250:].copy()  # ard coded: as there are 250 samples, you can also use len(df_csv) instead of 250
 
 # Prepare model summaries
 df_bhc1 = df_xlsx[['hadm_id', 'brief_hospital_course']].copy()
