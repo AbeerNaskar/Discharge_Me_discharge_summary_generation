@@ -6,7 +6,7 @@ PATH = 'Path_to_test_file_which_contains_discharge_text'
 
 # Load files
 csv_file = PATH + "test.csv"   # test file with 'discharge_text'
-xlsx_file = PATH1 + "extra/new_ft_dec_test2_unsloth_phi4_as_it_is1_.xlsx"  # Generated xlsx file
+xlsx_file = PATH1 + "new_ft_dec_test2_unsloth_phi4_as_it_is1_.xlsx"  # Generated xlsx file
 
 
 df_csv = pd.read_csv(csv_file)
