@@ -1,4 +1,4 @@
-##### further processing, the processed documents using fine_tun_out_to_scoring_inp.py
+##### further processing, the processed documents using out_to_scoring_inp.py
 ##### if any error comes with the previously generated file
 
 
