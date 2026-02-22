@@ -154,9 +154,84 @@ def truncated_to_limit(st, limit=2500):
 
 
 
+##### which one you want to convert
+key = "test_phase_2"   
+
+import pandas as pd
 
 
-df = pd.read_csv("/data/gpfs/projects/punim2270/discharge_me_bionlp24/data/discharge-me-bionlp-acl24-shared-task-on-streamlining-discharge-documentation-1.2/all_merged_data_test_phase_2_truncated.csv")[:250]
+# Read the necessary CSV files (the folder names used by organizers are same as key)
+df_diagnosis = pd.read_csv('./'+key+'/'+'diagnosis.csv.gz', compression='gzip')
+df_triage = pd.read_csv('./'+key+'/'+'triage.csv.gz', compression='gzip')
+df_edstays = pd.read_csv('./'+key+'/'+'edstays.csv.gz', compression='gzip')
+
+# Select the relevant columns from diagnosis and triage
+df_diagnosis_subset = df_diagnosis[['stay_id', 'icd_title']]
+df_triage_subset = df_triage[['stay_id', 'temperature', 'heartrate', 'resprate', 'o2sat', 'sbp', 'dbp', 'pain', 'acuity', 'chiefcomplaint']]
+
+
+df_merged = pd.merge(df_edstays, df_diagnosis_subset, on='stay_id', how='left')
+df_merged = pd.merge(df_merged, df_triage_subset, on='stay_id', how='left')
+
+df_merged = df_merged.groupby('hadm_id').agg(lambda x: ', '.join(x.astype(str))).reset_index()
+
+
+columns_to_split = [
+    "gender", "race", "arrival_transport", "disposition", "icd_title",
+    "temperature", "heartrate", "resprate", "o2sat", "sbp", "dbp", "pain", "acuity"
+]
+
+# Apply split and keep first element for each column
+for col in columns_to_split:
+    df_merged[col] = df_merged[col].astype(str).apply(lambda x: x.split(',')[0].strip())
+
+
+import pandas as pd
+df_rad = pd.read_csv('./'+key+'/'+'radiology.csv.gz', compression='gzip')
+
+# Group by 'hadm_id' and concatenate the 'text' column
+df_merged1 = df_rad.groupby('hadm_id')['text'].apply(lambda x: '\n================\n'.join(x)).reset_index()
+df_merged1 = df_merged1.rename(columns={'text': 'radiology_text'})
+# Save the merged dataframe to a new CSV file
+df_merged = pd.merge(df_merged, df_merged1, on='hadm_id', how='left')
+
+
+import pandas as pd
+df_target = pd.read_csv('./'+key+'/'+'discharge_target.csv.gz', compression='gzip', header=0, sep=',', quotechar='"')
+df_discharge = pd.read_csv('./'+key+'/'+'discharge.csv.gz', compression='gzip', header=0, sep=',', quotechar='"')
+
+# Keep only the specified columns
+df_target = df_target[['hadm_id', 'discharge_instructions', 'brief_hospital_course']]
+df_discharge = df_discharge[['hadm_id', 'text']]
+
+# Merge the two dataframes on 'hadm_id'
+merged_df = pd.merge(df_target, df_discharge, on='hadm_id', how='inner')
+
+# Function to remove substrings from text
+def remove_substrings(text, instructions, course):
+    # Remove discharge instructions and brief hospital course from text
+    if isinstance(instructions, str):
+        text = text.replace(instructions, '', 1) # Remove only the first occurrence
+    if isinstance(course, str):
+        text = text.replace(course, '', 1) # Remove only the first occurrence
+    return text.strip()
+
+# Apply the function to create the cleaned text column
+merged_df['cleaned_text'] = merged_df.apply(
+    lambda row: remove_substrings(row['text'], row['discharge_instructions'], row['brief_hospital_course']),
+    axis=1
+)
+
+
+merged_df = merged_df.drop(columns=['text'])
+merged_df = merged_df.rename(columns={'cleaned_text': 'discharge_text'})
+
+
+df = pd.merge(df_merged, merged_df, on='hadm_id', how='left')
+
+
+
+
 
 def format_input(row):
     return (
