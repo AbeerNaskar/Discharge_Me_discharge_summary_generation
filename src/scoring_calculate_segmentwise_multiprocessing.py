@@ -17,9 +17,9 @@ from align import AlignScorer
 from UMLSScorer import UMLSScorer
 
 # Paths
-PATH = "./input/"  ###### input path same as the original codes provided by organizers
-RES_PATH = os.path.join(PATH, "files_path") # same as 'res' folder in provided code, we use this folder to keep our generated files in xlsx format
-REF_PATH = os.path.join(PATH, "ref/target_A.csv") # same as reference dataset, we generate our own reference dataset using organizers provided 250 samples 
+PATH = "./path_to_input_files/"  ###### input path same as the original codes provided by organizers
+RES_PATH = os.path.join(PATH, "path_to_generated_files_after_reshape") # same as 'res' folder in provided code, we use this folder to keep our generated files in xlsx format
+REF_PATH = os.path.join(PATH, "path_to_reference_data/target_A.csv") # same as reference dataset, we generate our own reference dataset using organizers provided 250 samples 
 
 # Load reference once
 reference = pd.read_csv(REF_PATH, keep_default_na=False)
