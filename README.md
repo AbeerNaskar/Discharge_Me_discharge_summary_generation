@@ -52,3 +52,18 @@ run ```scoring_calculate_segmentwise_multiprocessing.py``` corresponding to enti
 <br/>
 
 run ```cus_draw.py``` corresponding to entire output folder to get section wise uniqueness score of each files together in a plot
+
+
+
+## Evaluation data
+250 discharge summaries were used for final evaluation, in the shared task. We accessed the unique ```hadm_id``` for the final evaluation set (subset of Phase II Testing data) from the organisers, so that we can directly compare our results with the 2024 competition leaderboard. We also provided the reslt of that data for further clarification (what we provided, are only the predictions of our models, not original data). Also the evaluation results are also provided (which we get by running the script given by the organisers).
+
+
+## Abbreviations
+FT: fine tune
+FP: full prompt
+TP: truncated prompt
+ZS: zero shot
+FS: few shot
+
+
